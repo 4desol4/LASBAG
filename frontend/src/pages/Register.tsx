@@ -183,14 +183,12 @@ export default function Register() {
             Sign in
           </Link>
         </p>
-        {import.meta.env.DEV && (
-          <Link
-            to="/dev/accounts"
-            className="block w-full rounded-xl border border-dashed border-lagos-500 bg-lagos-50 px-4 py-3 text-center text-sm font-semibold text-lagos-800 transition-colors hover:bg-lagos-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagos-700"
-          >
-            View seeded test accounts
-          </Link>
-        )}
+        <Link
+          to="/dev/accounts"
+          className="block w-full rounded-xl border border-dashed border-lagos-500 bg-lagos-50 px-4 py-3 text-center text-sm font-semibold text-lagos-800 transition-colors hover:bg-lagos-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagos-700"
+        >
+          View seeded test accounts
+        </Link>
       </form>
     </AuthShell>
   );
