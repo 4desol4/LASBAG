@@ -18,10 +18,8 @@ const Notifications = lazy(() => import("./pages/Notifications")),
   AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const Landing = lazy(() => import("./pages/Landing")),
   Login = lazy(() => import("./pages/Login")),
-  Register = lazy(() => import("./pages/Register"));
-const DevAccounts = import.meta.env.DEV
-  ? lazy(() => import("./pages/DevAccounts"))
-  : null;
+  Register = lazy(() => import("./pages/Register")),
+  DevAccounts = lazy(() => import("./pages/DevAccounts"));
 
 /** Role gate. The API enforces the same rules; this only avoids showing screens a user can't use. */
 function Protected({ roles }: { roles?: SessionUser["role"][] }) {
@@ -54,9 +52,7 @@ export function App() {
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        {DevAccounts && (
-          <Route path="/dev/accounts" element={<DevAccounts />} />
-        )}
+        <Route path="/dev/accounts" element={<DevAccounts />} />
         <Route element={<Protected roles={["APPLICANT", "PROFESSIONAL"]} />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
