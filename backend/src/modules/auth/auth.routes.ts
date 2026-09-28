@@ -11,15 +11,26 @@ import { AppError, wrap } from "../../lib/errors.js";
 import { audit } from "../../lib/audit.js";
 
 const sha = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
-export const getSessionCookieOptions = (maxAge: number, nodeEnv: string) => ({
-  httpOnly: true,
-  sameSite: nodeEnv === "production" ? ("none" as const) : ("lax" as const),
-  secure: nodeEnv === "production",
-  path: "/",
-  maxAge,
-});
+const isCrossSiteProduction = (frontendUrl: string, nodeEnv: string) =>
+  nodeEnv === "production" ||
+  (frontendUrl.startsWith("https://") && !frontendUrl.includes("localhost"));
+
+export const getSessionCookieOptions = (
+  maxAge: number,
+  nodeEnv: string,
+  frontendUrl = env.FRONTEND_URL,
+) => {
+  const crossSite = isCrossSiteProduction(frontendUrl, nodeEnv);
+  return {
+    httpOnly: true,
+    sameSite: crossSite ? ("none" as const) : ("lax" as const),
+    secure: crossSite,
+    path: "/",
+    maxAge,
+  };
+};
 const cookie = (maxAge: number) =>
-  getSessionCookieOptions(maxAge, env.NODE_ENV);
+  getSessionCookieOptions(maxAge, env.NODE_ENV, env.FRONTEND_URL);
 const safe = (u: any) => ({
   id: u.id,
   email: u.email,
@@ -136,8 +147,16 @@ authRouter.post(
         data: { revokedAt: new Date() },
       });
     res
-      .clearCookie("lasbag_at")
-      .clearCookie("lasbag_rt")
+      .clearCookie("lasbag_at", {
+        path: "/",
+        sameSite: "none",
+        secure: true,
+      })
+      .clearCookie("lasbag_rt", {
+        path: "/",
+        sameSite: "none",
+        secure: true,
+      })
       .json(apiOk(null, "Signed out"));
   }),
 );
