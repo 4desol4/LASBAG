@@ -11,12 +11,15 @@ import { AppError, wrap } from "../../lib/errors.js";
 import { audit } from "../../lib/audit.js";
 
 const sha = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
-const cookie = (maxAge: number) => ({
+export const getSessionCookieOptions = (maxAge: number, nodeEnv: string) => ({
   httpOnly: true,
-  sameSite: "lax" as const,
-  secure: env.NODE_ENV === "production",
+  sameSite: nodeEnv === "production" ? ("none" as const) : ("lax" as const),
+  secure: nodeEnv === "production",
+  path: "/",
   maxAge,
 });
+const cookie = (maxAge: number) =>
+  getSessionCookieOptions(maxAge, env.NODE_ENV);
 const safe = (u: any) => ({
   id: u.id,
   email: u.email,
