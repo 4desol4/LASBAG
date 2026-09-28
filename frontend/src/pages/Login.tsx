@@ -8,8 +8,17 @@ import { AuthShell } from "./AuthShell";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/primitives";
 import { homeFor, useAuth } from "../features/auth/AuthContext";
+const demoUsername =
+  /^(demo[1-5]|officer[1-3]|professional[1-2]|admin|superadmin)$/i;
 const schema = z.object({
-  email: z.string().email("Enter a valid email address"),
+  email: z
+    .string()
+    .trim()
+    .refine(
+      (value) =>
+        z.string().email().safeParse(value).success || demoUsername.test(value),
+      "Enter a valid email address or demo username",
+    ),
   password: z.string().min(1, "Enter your password"),
   remember: z.boolean().optional(),
 });
@@ -48,9 +57,9 @@ export default function Login() {
           </p>
         )}
         <Field
-          label="Email"
-          type="email"
-          autoComplete="email"
+          label="Email or demo username"
+          type="text"
+          autoComplete="username"
           error={errors.email?.message}
           {...register("email")}
         />

@@ -26,7 +26,7 @@ Design decisions and the palette, type, motion and glass recipe are in `frontend
 ## Run
 
 1. Start PostgreSQL. Copy `backend/.env.example` to `backend/.env`, then set your database credentials and two distinct random JWT secrets. Keep `ALLOW_DEMO_SEED=false` outside local development.
-2. Set `SEED_PASSWORD` in `backend/.env` to a development-only password. Copy the same value to `VITE_DEMO_PASSWORD` in `frontend/.env` after copying `frontend/.env.example` to `frontend/.env`.
+2. Copy `frontend/.env.example` to `frontend/.env` and configure the API URL if needed. Seeded local accounts use the development-only password `lasbag`.
 3. Run `cd backend` then `npm install`.
 4. For local development only, set `ALLOW_DEMO_SEED=true` in `backend/.env`. From `backend`, run `npx prisma format --schema prisma/schema.prisma`, `npm run db:migrate`, and `npm run db:seed`.
 5. In one terminal run `cd backend` then `npm run dev`; in another run `cd frontend`, `npm install`, then `npm run dev` (web :5173, API :4000).
@@ -34,7 +34,7 @@ Design decisions and the palette, type, motion and glass recipe are in `frontend
 
 ## Demo accounts
 
-Demo seeding is development-only. Set `ALLOW_DEMO_SEED=true` and `SEED_PASSWORD` in `backend/.env`, then run `npm run db:seed` from `backend`. Configure the same value as `VITE_DEMO_PASSWORD` in `frontend/.env` to see every seeded login at `http://localhost:5173/dev/accounts`. The page and its credentials are excluded from production builds. Never enable demo seeding in production.
+Demo seeding is development-only. Set `ALLOW_DEMO_SEED=true` in `backend/.env`, then run `npm run db:seed` from `backend`. Visit `/dev/accounts` to see the seeded usernames and shared password. This page and its credentials are publicly visible by design; use the accounts only with demo data. The seed script refuses to run in production, and `ALLOW_DEMO_SEED` must remain false there.
 
 Each app has its own `.gitignore` for dependencies, build output, and local environment files. Generated seed-data folders/exports are ignored; the seed script and database migrations stay tracked so a clean checkout remains reproducible.
 

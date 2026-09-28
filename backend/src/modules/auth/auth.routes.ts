@@ -11,6 +11,14 @@ import { AppError, wrap } from "../../lib/errors.js";
 import { audit } from "../../lib/audit.js";
 
 const sha = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
+const DEMO_USERNAME =
+  /^(demo[1-5]|officer[1-3]|professional[1-2]|admin|superadmin)$/;
+export const resolveLoginIdentifier = (identifier: string) => {
+  const normalized = identifier.trim().toLowerCase();
+  if (DEMO_USERNAME.test(normalized)) return `${normalized}@demo.invalid`;
+  if (normalized.endsWith("@demo.invalid")) return null;
+  return normalized;
+};
 const isCrossSiteProduction = (frontendUrl: string, nodeEnv: string) =>
   nodeEnv === "production" ||
   (frontendUrl.startsWith("https://") && !frontendUrl.includes("localhost"));
@@ -104,9 +112,12 @@ authRouter.post(
   "/login",
   authAttemptLimit,
   wrap(async (req, res) => {
-    const { email, password } = z
-      .object({ email: z.string().email().toLowerCase(), password: z.string() })
+    const { email: identifier, password } = z
+      .object({ email: z.string().trim().min(1), password: z.string() })
       .parse(req.body);
+    const email = resolveLoginIdentifier(identifier);
+    if (!email || !z.string().email().safeParse(email).success)
+      throw new AppError(400, "Enter a valid email address or demo username.");
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !(await argon2.verify(user.passwordHash, password)))
       throw new AppError(401, "Email or password is incorrect.");

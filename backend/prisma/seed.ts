@@ -14,15 +14,22 @@ if (
     "Demo seeding is disabled. Set ALLOW_DEMO_SEED=true in a non-production environment to continue.",
   );
 }
-const DEV_PASSWORD = (() => {
-  const password = process.env.SEED_PASSWORD;
-  if (!password || password.length < 12) {
-    throw new Error(
-      "Set SEED_PASSWORD to a development-only password with at least 12 characters.",
-    );
-  }
-  return password;
-})();
+const DEV_PASSWORD = "lasbag";
+const demoEmail = (username: string) => `${username}@demo.invalid`;
+const LEGACY_DEMO_EMAILS: Record<string, string> = {
+  [demoEmail("demo1")]: "applicant.start@lasbag-demo.local",
+  [demoEmail("demo2")]: "applicant.stage5@lasbag-demo.local",
+  [demoEmail("demo3")]: "applicant.laststage@lasbag-demo.local",
+  [demoEmail("demo4")]: "applicant.completed@lasbag-demo.local",
+  [demoEmail("demo5")]: "applicant.actionrequired@lasbag-demo.local",
+  [demoEmail("officer1")]: "officer@lasbag-demo.local",
+  [demoEmail("officer2")]: "officer.lirs@lasbag-demo.local",
+  [demoEmail("officer3")]: "officer.lasbca@lasbag-demo.local",
+  [demoEmail("professional1")]: "professional.architect@lasbag-demo.local",
+  [demoEmail("professional2")]: "professional.engineer@lasbag-demo.local",
+  [demoEmail("admin")]: "admin@lasbag-demo.local",
+  [demoEmail("superadmin")]: "superadmin@lasbag-demo.local",
+};
 const DAY = 864e5,
   now = Date.now(),
   ago = (d: number) => new Date(now - d * DAY);
@@ -150,7 +157,7 @@ const DEFS: [string, string, string, StageKey, number | null, C][] = [
 ];
 
 interface Scenario {
-  email: string;
+  username: string;
   first: string;
   last: string;
   ref: string;
@@ -167,7 +174,7 @@ interface Scenario {
 }
 const SCENARIOS: Scenario[] = [
   {
-    email: "applicant.start@lasbag-demo.local",
+    username: "demo1",
     first: "Adebayo",
     last: "Ogunleye",
     ref: "LASBAG-DEV-2026-00448",
@@ -187,7 +194,7 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
-    email: "applicant.stage5@lasbag-demo.local",
+    username: "demo2",
     first: "Chinedu",
     last: "Okafor",
     ref: "LASBAG-DEV-2026-00421",
@@ -221,7 +228,7 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
-    email: "applicant.laststage@lasbag-demo.local",
+    username: "demo3",
     first: "Fatima",
     last: "Balogun",
     ref: "LASBAG-DEV-2026-00398",
@@ -251,7 +258,7 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
-    email: "applicant.completed@lasbag-demo.local",
+    username: "demo4",
     first: "Tunde",
     last: "Adeyemi",
     ref: "LASBAG-DEV-2026-00352",
@@ -278,7 +285,7 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
-    email: "applicant.actionrequired@lasbag-demo.local",
+    username: "demo5",
     first: "Ibrahim",
     last: "Yusuf",
     ref: "LASBAG-DEV-2026-00409",
@@ -355,8 +362,32 @@ async function main() {
     last: string,
     role: any,
     agencyCode?: string,
-  ) =>
-    prisma.user.upsert({
+  ) => {
+    const legacyEmail = LEGACY_DEMO_EMAILS[email];
+    if (legacyEmail)
+      return prisma.user
+        .updateMany({ where: { email: legacyEmail }, data: { email } })
+        .then(() =>
+          prisma.user.upsert({
+            where: { email },
+            create: {
+              email,
+              firstName: first,
+              lastName: last,
+              role,
+              passwordHash,
+              agencyId: agencyCode ? agency[agencyCode] : null,
+            },
+            update: {
+              firstName: first,
+              lastName: last,
+              role,
+              passwordHash,
+              agencyId: agencyCode ? agency[agencyCode] : null,
+            },
+          }),
+        );
+    return prisma.user.upsert({
       where: { email },
       create: {
         email,
@@ -374,37 +405,33 @@ async function main() {
         agencyId: agencyCode ? agency[agencyCode] : null,
       },
     });
+  };
   const officer = await upsertUser(
-    "officer@lasbag-demo.local",
+    demoEmail("officer1"),
     "Tolu",
     "Adeyemi",
     "MDA_OFFICER",
     "LASPPPA",
   );
   await upsertUser(
-    "officer.lirs@lasbag-demo.local",
+    demoEmail("officer2"),
     "Ngozi",
     "Eze",
     "MDA_OFFICER",
     "LIRS",
   );
   await upsertUser(
-    "officer.lasbca@lasbag-demo.local",
+    demoEmail("officer3"),
     "Kunle",
     "Bakare",
     "MDA_OFFICER",
     "LASBCA",
   );
-  await upsertUser("admin@lasbag-demo.local", "Amaka", "Nwosu", "ADMIN");
-  await upsertUser(
-    "superadmin@lasbag-demo.local",
-    "Segun",
-    "Adebisi",
-    "SUPER_ADMIN",
-  );
+  await upsertUser(demoEmail("admin"), "Amaka", "Nwosu", "ADMIN");
+  await upsertUser(demoEmail("superadmin"), "Segun", "Adebisi", "SUPER_ADMIN");
   for (const [e, f, l] of [
-    ["professional.architect@lasbag-demo.local", "Yemi", "Coker"],
-    ["professional.engineer@lasbag-demo.local", "Halima", "Sani"],
+    [demoEmail("professional1"), "Yemi", "Coker"],
+    [demoEmail("professional2"), "Halima", "Sani"],
   ])
     await prisma.professionalProfile.upsert({
       where: { userId: (await upsertUser(e, f, l, "PROFESSIONAL")).id },
@@ -428,7 +455,12 @@ async function main() {
   );
 
   for (const sc of SCENARIOS) {
-    const user = await upsertUser(sc.email, sc.first, sc.last, "APPLICANT");
+    const user = await upsertUser(
+      demoEmail(sc.username),
+      sc.first,
+      sc.last,
+      "APPLICANT",
+    );
     const old = await prisma.application.findUnique({
       where: { reference: sc.ref },
     });
@@ -703,7 +735,7 @@ async function main() {
       where: { reference: sc.ref },
     });
     console.log(
-      `${sc.email.padEnd(42)} ${a.reference}  ${a.status.padEnd(16)} stage=${a.currentStage.padEnd(14)} progress=${a.progress}%`,
+      `${sc.username.padEnd(12)} ${a.reference}  ${a.status.padEnd(16)} stage=${a.currentStage.padEnd(14)} progress=${a.progress}%`,
     );
   }
   console.log(

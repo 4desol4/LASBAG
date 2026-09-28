@@ -4,58 +4,58 @@ import { Link } from "react-router-dom";
 
 const accounts = [
   {
-    email: "applicant.start@lasbag-demo.local",
+    username: "demo1",
     role: "Applicant",
     state: "Draft application",
   },
   {
-    email: "applicant.stage5@lasbag-demo.local",
+    username: "demo2",
     role: "Applicant",
     state: "Authorization to commence",
   },
   {
-    email: "applicant.laststage@lasbag-demo.local",
+    username: "demo3",
     role: "Applicant",
     state: "Completion review",
   },
   {
-    email: "applicant.completed@lasbag-demo.local",
+    username: "demo4",
     role: "Applicant",
     state: "Completed application",
   },
   {
-    email: "applicant.actionrequired@lasbag-demo.local",
+    username: "demo5",
     role: "Applicant",
     state: "Action required",
   },
   {
-    email: "officer@lasbag-demo.local",
+    username: "officer1",
     role: "MDA officer",
     state: "LASPPPA queue",
   },
   {
-    email: "officer.lirs@lasbag-demo.local",
+    username: "officer2",
     role: "MDA officer",
     state: "LIRS queue",
   },
   {
-    email: "officer.lasbca@lasbag-demo.local",
+    username: "officer3",
     role: "MDA officer",
     state: "LASBCA queue",
   },
   {
-    email: "professional.architect@lasbag-demo.local",
+    username: "professional1",
     role: "Professional",
     state: "Architect profile",
   },
   {
-    email: "professional.engineer@lasbag-demo.local",
+    username: "professional2",
     role: "Professional",
     state: "Engineer profile",
   },
-  { email: "admin@lasbag-demo.local", role: "Admin", state: "Admin dashboard" },
+  { username: "admin", role: "Admin", state: "Admin dashboard" },
   {
-    email: "superadmin@lasbag-demo.local",
+    username: "superadmin",
     role: "Super admin",
     state: "Full admin access",
   },
@@ -64,14 +64,14 @@ const accounts = [
 export default function DevAccounts() {
   const [copied, setCopied] = useState<string | null>(null);
   const [copyFailed, setCopyFailed] = useState(false);
-  const password = import.meta.env.VITE_DEMO_PASSWORD;
+  const password = "lasbag";
 
-  async function copyCredentials(email: string) {
+  async function copyCredentials(username: string) {
     try {
       await navigator.clipboard.writeText(
-        `Email: ${email}\nPassword: ${password}`,
+        `Username: ${username}\nPassword: ${password}`,
       );
-      setCopied(email);
+      setCopied(username);
       setCopyFailed(false);
       window.setTimeout(() => setCopied(null), 1800);
     } catch {
@@ -90,7 +90,7 @@ export default function DevAccounts() {
         </Link>
         <header className="mt-8 border-b border-surface-line pb-6">
           <p className="text-sm font-semibold uppercase text-lagos-700">
-            Local development
+            Public demo access
           </p>
           <h1 className="mt-2 font-display text-h1 text-navy-950">
             Seed accounts
@@ -102,14 +102,13 @@ export default function DevAccounts() {
         </header>
 
         <section
-          aria-label="Development-only warning"
+          aria-label="Public demo credential notice"
           className="mt-6 flex gap-3 border-l-4 border-gold-500 bg-gold-100 p-4 text-sm text-navy-950"
         >
           <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
           <p>
-            Development credentials only. They are not included in production
-            builds. Do not reuse these passwords or expose this development
-            server publicly.
+            These shared demo credentials are public. Use them only with demo
+            data, never with real or production accounts.
           </p>
         </section>
 
@@ -120,42 +119,36 @@ export default function DevAccounts() {
           >
             Shared password
           </h2>
-          {password ? (
-            <code className="mt-2 inline-block select-all rounded border border-surface-line bg-white px-3 py-2 font-mono text-sm">
-              {password}
-            </code>
-          ) : (
-            <p className="mt-2 text-sm text-danger">
-              Set VITE_DEMO_PASSWORD in frontend/.env.
-            </p>
-          )}
+          <code className="mt-2 inline-block select-all rounded border border-surface-line bg-white px-3 py-2 font-mono text-sm">
+            {password}
+          </code>
         </section>
 
         <section className="mt-8" aria-label="Seeded users">
           <ul className="divide-y divide-surface-line border-y border-surface-line">
             {accounts.map((account) => (
               <li
-                key={account.email}
+                key={account.username}
                 className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_10rem_12rem_auto] sm:items-center"
               >
                 <code className="break-all text-sm font-semibold text-navy-950">
-                  {account.email}
+                  {account.username}
                 </code>
                 <span className="text-sm text-ink-soft">{account.role}</span>
                 <span className="text-sm text-ink-soft">{account.state}</span>
                 <button
                   type="button"
-                  onClick={() => void copyCredentials(account.email)}
+                  onClick={() => void copyCredentials(account.username)}
                   disabled={!password}
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-surface-line bg-white px-3 text-sm font-semibold text-navy-900 hover:bg-lagos-50 disabled:opacity-50"
-                  aria-label={`Copy credentials for ${account.email}`}
+                  aria-label={`Copy credentials for ${account.username}`}
                 >
-                  {copied === account.email ? (
+                  {copied === account.username ? (
                     <Check className="h-4 w-4" aria-hidden />
                   ) : (
                     <Copy className="h-4 w-4" aria-hidden />
                   )}
-                  {copied === account.email ? "Copied" : "Copy login"}
+                  {copied === account.username ? "Copied" : "Copy login"}
                 </button>
               </li>
             ))}
@@ -166,8 +159,8 @@ export default function DevAccounts() {
         </p>
         {copyFailed && (
           <p role="status" className="mt-2 text-sm text-danger">
-            Clipboard access was denied. Select and copy the email and password
-            manually.
+            Clipboard access was denied. Select and copy the username and
+            password manually.
           </p>
         )}
       </div>
